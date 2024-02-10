@@ -60,16 +60,16 @@ void umbc::Robot::opcontrol() {
 
     // initialize lift
     pros::Motor lift_motor = pros::Motor(LIFT_MOTOR_PORT);
-    pros::MotorGroup wings = pros::MotorGroup(vector<pros::Motor>{lift_motor});
-    drive_left.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-    drive_right.set_gearing(E_MOTOR_GEAR_RED);
+    pros::MotorGroup lift = pros::MotorGroup(vector<pros::Motor>{lift_motor});
+    lift.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    lift.set_gearing(E_MOTOR_GEAR_RED);
 
     // initialize wings
 	pros::Motor wing_left_motor = pros::Motor(WING_LEFT_MOTOR_PORT);
 	pros::Motor wing_right_motor = pros::Motor(WING_RIGHT_MOTOR_PORT);
     pros::MotorGroup wings = pros::MotorGroup(vector<pros::Motor>{wing_left_motor, wing_right_motor});
-    drive_left.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-    drive_right.set_gearing(E_MOTOR_GEAR_BLUE);
+    wings.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    wings.set_gearing(E_MOTOR_GEAR_BLUE);
 
     while(1) {
 
