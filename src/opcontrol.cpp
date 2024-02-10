@@ -16,7 +16,6 @@ using namespace pros;
 using namespace umbc;
 using namespace std;
 
-#define CONTROLLER_ANALOG_MAX        127
 #define MOTOR_RED_GEAR_MULTIPLIER    100
 #define MOTOR_GREEN_GEAR_MULTIPLIER  200
 #define MOTOR_BLUE_GEAR_MULTIPLIER   600
@@ -45,15 +44,15 @@ void umbc::Robot::opcontrol() {
     umbc::Controller* controller_partner = this->controller_partner;
 
     // initialize left drive
-    pros::Motor drive_left_front_motor = pros::Motor(LEFT_FRONT_MOTOR_PORT, MOTOR_REVERSE);
-	pros::Motor drive_left_back_motor = pros::Motor(LEFT_BACK_MOTOR_PORT);
+    pros::Motor drive_left_front_motor = pros::Motor(LEFT_FRONT_MOTOR_PORT);
+	pros::Motor drive_left_back_motor = pros::Motor(LEFT_BACK_MOTOR_PORT, MOTOR_REVERSE);
     pros::MotorGroup drive_left = pros::MotorGroup(vector<pros::Motor>{drive_left_back_motor, drive_left_back_motor});
     drive_left.set_brake_modes(E_MOTOR_BRAKE_COAST);
     drive_left.set_gearing(E_MOTOR_GEAR_GREEN);
 	
     // initialize right drive
-    pros::Motor drive_right_front_motor = pros::Motor(RIGHT_FRONT_MOTOR_PORT, MOTOR_REVERSE);
-	pros::Motor drive_right_back_motor = pros::Motor(RIGHT_BACK_MOTOR_PORT);
+    pros::Motor drive_right_front_motor = pros::Motor(RIGHT_FRONT_MOTOR_PORT);
+	pros::Motor drive_right_back_motor = pros::Motor(RIGHT_BACK_MOTOR_PORT, MOTOR_REVERSE);
     pros::MotorGroup drive_right = pros::MotorGroup(vector<pros::Motor>{drive_right_back_motor, drive_right_back_motor});
     drive_right.set_brake_modes(E_MOTOR_BRAKE_COAST);
     drive_right.set_gearing(E_MOTOR_GEAR_GREEN);
@@ -77,10 +76,10 @@ void umbc::Robot::opcontrol() {
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_X);
 
-        int32_t drive_left_velocity = (int32_t)(((double)(arcade_y + arcade_x) / (double)CONTROLLER_ANALOG_MAX)
+        int32_t drive_left_velocity = (int32_t)(((double)(arcade_x - arcade_y) / (double)E_CONTROLLER_ANALOG_MAX)
                                         * MOTOR_GREEN_GEAR_MULTIPLIER);
 
-        int32_t drive_right_velocity = (int32_t)(((double)(arcade_y - arcade_x) / (double)CONTROLLER_ANALOG_MAX)
+        int32_t drive_right_velocity = (int32_t)(((double)(arcade_x + arcade_y) / (double)E_CONTROLLER_ANALOG_MAX)
                                         * MOTOR_GREEN_GEAR_MULTIPLIER);                                
 
         drive_left.move_velocity(drive_left_velocity);
