@@ -36,6 +36,9 @@ using namespace std;
 #define WING_LEFT_MOTOR_PORT  6
 #define WING_RIGHT_MOTOR_PORT 18
 
+#define WING_POSITION_MAX_ERROR 10
+#define WING_POSITION_EXPAND    2000
+
 
 void umbc::Robot::opcontrol() {
 
@@ -64,11 +67,21 @@ void umbc::Robot::opcontrol() {
     lift.set_gearing(E_MOTOR_GEAR_RED);
 
     // initialize wings
+    bool is_wing_position_manual = false;
+    static double wing_position = 0;
+    static double wing_position_target = 0;
 	pros::Motor wing_left_motor = pros::Motor(WING_LEFT_MOTOR_PORT);
 	pros::Motor wing_right_motor = pros::Motor(WING_RIGHT_MOTOR_PORT);
-    pros::MotorGroup wings = pros::MotorGroup(vector<pros::Motor>{wing_left_motor, wing_right_motor});
-    wings.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    pros::MotorGroup wings = pros::MotorGroup(vector<pros::Motor>{wing_right_motor, wing_left_motor});
+    wings.set_brake_modes(E_MOTOR_BRAKE_BRAKE);
     wings.set_gearing(E_MOTOR_GEAR_BLUE);
+    
+    // set zero position for wings
+    if (0 == wing_position) {
+        wings.tare_position();
+    } else {
+        wings.set_zero_position(-wing_position);
+    }
 
     while(1) {
 
@@ -84,6 +97,36 @@ void umbc::Robot::opcontrol() {
 
         drive_left.move_velocity(drive_left_velocity);
         drive_right.move_velocity(drive_right_velocity);
+
+        // set position for wings
+        wing_position = wings.get_positions().front();
+        if (controller_master->get_digital_new_press(E_CONTROLLER_DIGITAL_R1)) {
+            wing_position_target = (wing_position_target == WING_POSITION_EXPAND) ? 0 : WING_POSITION_EXPAND;
+            wings.move_absolute(wing_position_target, MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = false;
+        }
+        
+        // manually control left wing
+        if (controller_master->get_digital(E_CONTROLLER_DIGITAL_X)) {
+            wing_left_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = true;
+        } else if (controller_master->get_digital(E_CONTROLLER_DIGITAL_Y)) {
+            wing_left_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = true;
+        } else if (is_wing_position_manual) {
+            wing_left_motor.brake();
+        }
+    
+        // manually control right wing
+        if (controller_master->get_digital(E_CONTROLLER_DIGITAL_A)) {
+            wing_right_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = true;
+        } else if (controller_master->get_digital(E_CONTROLLER_DIGITAL_B)) {
+            wing_right_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = true;
+        } else if (is_wing_position_manual) {
+            wing_right_motor.brake();
+        }
 
         // required loop delay (do not edit)
         pros::Task::delay(this->opcontrol_delay_ms);
