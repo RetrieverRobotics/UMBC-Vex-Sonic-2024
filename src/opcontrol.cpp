@@ -16,21 +16,25 @@ using namespace pros;
 using namespace umbc;
 using namespace std;
 
-#define MOTOR_REVERSE true
+#define CONTROLLER_ANALOG_MAX        127
+#define MOTOR_RED_GEAR_MULTIPLIER    100
+#define MOTOR_GREEN_GEAR_MULTIPLIER  200
+#define MOTOR_BLUE_GEAR_MULTIPLIER   600
+#define MOTOR_REVERSE                true
 
 // ports for left drive
 #define LEFT_FRONT_MOTOR_PORT 3
-#define LEFT_BACK_MOTOR_PORT 4
+#define LEFT_BACK_MOTOR_PORT  4
 
 // ports for right drive
 #define RIGHT_FRONT_MOTOR_PORT 1
-#define RIGHT_BACK_MOTOR_PORT 2
+#define RIGHT_BACK_MOTOR_PORT  2
 
 // ports for lift
 #define LIFT_MOTOR_PORT 19
 
 // ports for wings
-#define WING_LEFT_MOTOR_PORT 6
+#define WING_LEFT_MOTOR_PORT  6
 #define WING_RIGHT_MOTOR_PORT 18
 
 
@@ -72,8 +76,15 @@ void umbc::Robot::opcontrol() {
         // set velocity for drive (arcade controls)
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_X);
-        drive_left.move_velocity(arcade_y + arcade_x);
-        drive_right.move_velocity(arcade_y - arcade_x);
+
+        int32_t drive_left_velocity = (int32_t)(((double)(arcade_y + arcade_x) / (double)CONTROLLER_ANALOG_MAX)
+                                        * MOTOR_GREEN_GEAR_MULTIPLIER);
+
+        int32_t drive_right_velocity = (int32_t)(((double)(arcade_y - arcade_x) / (double)CONTROLLER_ANALOG_MAX)
+                                        * MOTOR_GREEN_GEAR_MULTIPLIER);                                
+
+        drive_left.move_velocity(drive_left_velocity);
+        drive_right.move_velocity(drive_right_velocity);
 
         // required loop delay (do not edit)
         pros::Task::delay(this->opcontrol_delay_ms);
