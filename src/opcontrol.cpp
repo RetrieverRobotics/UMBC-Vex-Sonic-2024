@@ -49,14 +49,14 @@ void umbc::Robot::opcontrol() {
     // initialize left drive
     pros::Motor drive_left_front_motor = pros::Motor(LEFT_FRONT_MOTOR_PORT);
 	pros::Motor drive_left_back_motor = pros::Motor(LEFT_BACK_MOTOR_PORT, MOTOR_REVERSE);
-    pros::MotorGroup drive_left = pros::MotorGroup(vector<pros::Motor>{drive_left_back_motor, drive_left_back_motor});
+    pros::MotorGroup drive_left = pros::MotorGroup(vector<pros::Motor>{drive_left_front_motor, drive_left_back_motor});
     drive_left.set_brake_modes(E_MOTOR_BRAKE_COAST);
     drive_left.set_gearing(E_MOTOR_GEAR_GREEN);
 	
     // initialize right drive
     pros::Motor drive_right_front_motor = pros::Motor(RIGHT_FRONT_MOTOR_PORT);
 	pros::Motor drive_right_back_motor = pros::Motor(RIGHT_BACK_MOTOR_PORT, MOTOR_REVERSE);
-    pros::MotorGroup drive_right = pros::MotorGroup(vector<pros::Motor>{drive_right_back_motor, drive_right_back_motor});
+    pros::MotorGroup drive_right = pros::MotorGroup(vector<pros::Motor>{drive_right_front_motor, drive_right_back_motor});
     drive_right.set_brake_modes(E_MOTOR_BRAKE_COAST);
     drive_right.set_gearing(E_MOTOR_GEAR_GREEN);
 
