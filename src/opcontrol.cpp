@@ -87,7 +87,7 @@ void umbc::Robot::opcontrol() {
 
         // set velocity for drive (arcade controls)
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
-        int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_X);
+        int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_RIGHT_X);
 
         int32_t drive_left_velocity = (int32_t)(((double)(arcade_x - arcade_y) / (double)E_CONTROLLER_ANALOG_MAX)
                                         * MOTOR_GREEN_GEAR_MULTIPLIER);
