@@ -7,6 +7,7 @@
  */
 
 #include "api.h"
+#include "pros/misc.h"
 #include "umbc.h"
 
 #include <cstdint>
@@ -24,15 +25,17 @@ using namespace std;
 // ports for left drive
 #define LEFT_FRONT_MOTOR_PORT 3
 #define LEFT_MIDDLE_MOTOR_PORT 4
-#define LEFT_BACK_MOTOR_PORT 11
+#define LEFT_BACK_MOTOR_PORT 12
 
 // ports for right drive
 #define RIGHT_FRONT_MOTOR_PORT 1
 #define RIGHT_MIDDLE_MOTOR_PORT 2
-#define RIGHT_BACK_MOTOR_PORT  12
+#define RIGHT_BACK_MOTOR_PORT  11
 
 // ports for lift
 #define LIFT_MOTOR_PORT 19
+
+#define LIFT_POSITION_MAX_ERROR 20
 
 // ports for wings
 #define WING_LEFT_MOTOR_PORT  6
@@ -52,7 +55,7 @@ void umbc::Robot::opcontrol() {
     pros::Motor drive_left_front_motor = pros::Motor(LEFT_FRONT_MOTOR_PORT);
     pros::Motor drive_left_middle_motor = pros::Motor(LEFT_MIDDLE_MOTOR_PORT, MOTOR_REVERSE);
 	pros::Motor drive_left_back_motor = pros::Motor(LEFT_BACK_MOTOR_PORT);
-    drive_left_back_motor.set_reversed(true);
+    //drive_left_back_motor.set_reversed(true);
     pros::MotorGroup drive_left = pros::MotorGroup(vector<pros::Motor>{drive_left_front_motor,
         drive_left_middle_motor, drive_left_back_motor});
     drive_left.set_brake_modes(E_MOTOR_BRAKE_COAST);
@@ -62,7 +65,7 @@ void umbc::Robot::opcontrol() {
     pros::Motor drive_right_front_motor = pros::Motor(RIGHT_FRONT_MOTOR_PORT);
     pros::Motor drive_right_middle_motor = pros::Motor(RIGHT_MIDDLE_MOTOR_PORT, MOTOR_REVERSE);
 	pros::Motor drive_right_back_motor = pros::Motor(RIGHT_BACK_MOTOR_PORT);
-    drive_right_back_motor.set_reversed(true);
+    //drive_right_back_motor.set_reversed(true);
     pros::MotorGroup drive_right = pros::MotorGroup(vector<pros::Motor>{drive_right_front_motor,
         drive_right_middle_motor, drive_right_back_motor});
     drive_right.set_brake_modes(E_MOTOR_BRAKE_COAST);
@@ -92,7 +95,28 @@ void umbc::Robot::opcontrol() {
     }
 
     while(1) {
-
+/*
+*                **Controls**
+* -------------------------------------------
+* | Left analog X -                          |
+* | Left analog Y - Power drive train        |
+* | Right analog X - Steer drive train       |
+* | Right analog Y -                         |
+* | Face Button A - Open right wing          |
+* | Face Button B - Close right wing         |
+* | Face Button X - Open left wing           |
+* | Face Button Y - Close right wing         |
+* | Face Button Up -                         |
+* | Face Button Down - Retract lift          |
+* | Face Button Left -                       |
+* | Face Button Right -                      |
+* | Shoulder Button R1 - Open/Close wings    |
+* | Shoulder Button R2 -                     |
+* | Shoulder Button L1 - Open lift           |
+* | Shoulder Button L2 - Close lift          |
+* -------------------------------------------
+* 
+*/
         // set velocity for drive (arcade controls)
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_RIGHT_X);
@@ -106,12 +130,24 @@ void umbc::Robot::opcontrol() {
         drive_left.move_velocity(drive_left_velocity);
         drive_right.move_velocity(drive_right_velocity);
 
+        // retract lift
+        static bool lift_retracting = false;
+        if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            lift_retracting = true;
+            lift_motor.move(-MOTOR_RED_GEAR_MULTIPLIER);
+        }
+
+        // check if fully retracted
+        if (abs(lift_motor.get_position()) < LIFT_POSITION_MAX_ERROR) {
+            lift_motor.brake();
+        }
+
         // set lift position
         if (controller_master->get_digital(E_CONTROLLER_DIGITAL_L1)) {
             lift.move_velocity(MOTOR_RED_GEAR_MULTIPLIER);
         } else if (controller_master->get_digital(E_CONTROLLER_DIGITAL_L2)) {
             lift.move_velocity(-MOTOR_RED_GEAR_MULTIPLIER);
-        } else {
+        } else if (!lift_retracting) {
             lift_motor.brake();
         }
 
