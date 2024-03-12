@@ -35,14 +35,18 @@ using namespace std;
 // ports for lift
 #define LIFT_MOTOR_PORT 19
 
+#define LIFT_ABS_MAX -9.3
 #define LIFT_POSITION_MAX_ERROR 20
+#define LIFT_MOVE_SPEED (int)(127*1)
 
 // ports for wings
 #define WING_LEFT_MOTOR_PORT  6
 #define WING_RIGHT_MOTOR_PORT 18
 
 #define WING_POSITION_MAX_ERROR 10
-#define WING_POSITION_EXPAND    2000
+#define LEFT_WING_POSITION_EXPAND    3100
+#define RIGHT_WING_POSITION_EXPAND    3200
+#define MIN_WING_AUTO_SPEED 0.5
 
 
 void umbc::Robot::opcontrol() {
@@ -79,8 +83,10 @@ void umbc::Robot::opcontrol() {
 
     // initialize wings
     bool is_wing_position_manual = false;
-    static double wing_position = 0;
-    static double wing_position_target = 0;
+    static double right_wing_position = 0;
+    static double left_wing_position = 0;
+    static double right_wing_position_target = 0;
+    static double left_wing_position_target = 0;
 	pros::Motor wing_left_motor = pros::Motor(WING_LEFT_MOTOR_PORT);
 	pros::Motor wing_right_motor = pros::Motor(WING_RIGHT_MOTOR_PORT);
     pros::MotorGroup wings = pros::MotorGroup(vector<pros::Motor>{wing_right_motor, wing_left_motor});
@@ -134,31 +140,43 @@ void umbc::Robot::opcontrol() {
         static bool lift_retracting = false;
         if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
             lift_retracting = true;
-            lift_motor.move(-MOTOR_RED_GEAR_MULTIPLIER);
+            lift_motor.move(-LIFT_MOVE_SPEED);
         }
 
         // check if fully retracted
         if (abs(lift_motor.get_position()) < LIFT_POSITION_MAX_ERROR) {
             lift_motor.brake();
+            lift_retracting = false;
         }
 
         // set lift position
-        if (controller_master->get_digital(E_CONTROLLER_DIGITAL_L1)) {
-            lift.move_velocity(MOTOR_RED_GEAR_MULTIPLIER);
-        } else if (controller_master->get_digital(E_CONTROLLER_DIGITAL_L2)) {
-            lift.move_velocity(-MOTOR_RED_GEAR_MULTIPLIER);
+        if (controller_master->get_digital(E_CONTROLLER_DIGITAL_R1)) {
+            lift.move_velocity(LIFT_MOVE_SPEED);
+        } else if (controller_master->get_digital(E_CONTROLLER_DIGITAL_L1) && lift_motor.get_position() > LIFT_ABS_MAX) {
+            lift.move_velocity(-LIFT_MOVE_SPEED);
         } else if (!lift_retracting) {
             lift_motor.brake();
         }
 
         // set position for wings
-        wing_position = wings.get_positions().front();
-        if (controller_master->get_digital_new_press(E_CONTROLLER_DIGITAL_R1)) {
-            wing_position_target = (wing_position_target == WING_POSITION_EXPAND) ? 0 : WING_POSITION_EXPAND;
-            wings.move_absolute(wing_position_target, MOTOR_BLUE_GEAR_MULTIPLIER);
+        right_wing_position = wing_right_motor.get_position();
+        if (controller_master->get_digital_new_press(E_CONTROLLER_DIGITAL_R2)) {
+            right_wing_position_target = (right_wing_position_target == RIGHT_WING_POSITION_EXPAND) ? 0 : RIGHT_WING_POSITION_EXPAND;
+            wing_right_motor.move_absolute(right_wing_position_target, MOTOR_BLUE_GEAR_MULTIPLIER);
             is_wing_position_manual = false;
         }
         
+        left_wing_position = wing_left_motor.get_position();
+        if (controller_master->get_digital_new_press(E_CONTROLLER_DIGITAL_L2)) {
+            left_wing_position_target = (left_wing_position_target == LEFT_WING_POSITION_EXPAND) ? 0 : LEFT_WING_POSITION_EXPAND;
+            wing_left_motor.move_absolute(left_wing_position_target, MOTOR_BLUE_GEAR_MULTIPLIER);
+            is_wing_position_manual = false;
+        }
+
+        if (!is_wing_position_manual && wings.get_actual_velocities().front() < MIN_WING_AUTO_SPEED) {
+            wings.brake();
+        }
+
         // manually control left wing
         if (controller_master->get_digital(E_CONTROLLER_DIGITAL_X)) {
             wing_left_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
