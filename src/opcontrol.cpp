@@ -116,10 +116,10 @@ void umbc::Robot::opcontrol() {
 * | Face Button Down - Retract lift          |
 * | Face Button Left -                       |
 * | Face Button Right -                      |
-* | Shoulder Button R1 - Open/Close wings    |
-* | Shoulder Button R2 -                     |
-* | Shoulder Button L1 - Open lift           |
-* | Shoulder Button L2 - Close lift          |
+* | Shoulder Button R1 - Open intake         |
+* | Shoulder Button R2 - Close intake        |
+* | Shoulder Button L1 - Toggle left wing    |
+* | Shoulder Button L2 - Toggle right wing   |
 * -------------------------------------------
 * 
 */
